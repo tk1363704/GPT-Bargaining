@@ -52,8 +52,7 @@ def define_arguments():
 
     # api keys
     # parser.add_argument('--api_key', type=str, default=None, help='openai api key')
-    # keys = ['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', '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', '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']
-    keys = ['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']
+    keys = ['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', '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', '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', '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', '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']
     parser.add_argument('--api_key', type=str, default=random.choice(keys), help='openai api key')
     parser.add_argument('--anthropic_api_key', type=str, default=None, help='anthropic api key')
     parser.add_argument('--ai21_api_key', type=str, default=None, help='ai21 api key')
