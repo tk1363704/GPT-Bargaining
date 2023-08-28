@@ -11,9 +11,11 @@ import numpy as np
 
 from tqdm import tqdm
 from pprint import pprint
+
+import keys
 from agent import (load_initial_instructions, involve_moderator, parse_final_price, 
     BuyerAgent, SellerAgent, ModeratorAgent, SellerCriticAgent, BuyerCriticAgent)
-from utils import * 
+from utils import *
 
 CONST_CRITIC_PATH = "lib_prompt/constant_feedback.txt"
 HUMAN_CRITIC_PATH = "lib_prompt/human_feedback_seller.txt"
@@ -52,8 +54,7 @@ def define_arguments():
 
     # api keys
     # parser.add_argument('--api_key', type=str, default=None, help='openai api key')
-    keys = ['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', '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', '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', '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', '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']
-    parser.add_argument('--api_key', type=str, default=random.choice(keys), help='openai api key')
+    parser.add_argument('--api_key', type=str, default=random.choice(keys.keys), help='openai api key')
     parser.add_argument('--anthropic_api_key', type=str, default=None, help='anthropic api key')
     parser.add_argument('--ai21_api_key', type=str, default=None, help='ai21 api key')
     parser.add_argument('--cohere_api_key', type=str, default=None, help='cohere api key')
