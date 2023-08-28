@@ -1,10 +1,10 @@
 """APIs for calling different engines"""
 
 import openai
-import anthropic
-import ai21
+# import anthropic
+# import ai21
 import re 
-import cohere
+# import cohere
 
 from copy import deepcopy
 from pprint import pprint
@@ -34,12 +34,12 @@ def claude_completion_with_backoff(api, **kwargs):
     return api.completion(**kwargs)
 
 
-@retry(stop=stop_after_attempt(STOP_AFTER_ATTEMPT), 
-       wait=wait_chain(*[wait_fixed(3) for i in range(2)] +
-                       [wait_fixed(5) for i in range(1)]))
-def ai21_completion_with_backoff(**kwargs):
-    """AI21 API wrapper, if network error then retry 3 times"""
-    return ai21.Completion.execute(**kwargs)
+# @retry(stop=stop_after_attempt(STOP_AFTER_ATTEMPT),
+#        wait=wait_chain(*[wait_fixed(3) for i in range(2)] +
+#                        [wait_fixed(5) for i in range(1)]))
+# def ai21_completion_with_backoff(**kwargs):
+#     """AI21 API wrapper, if network error then retry 3 times"""
+#     return ai21.Completion.execute(**kwargs)
 
 
 @retry(stop=stop_after_attempt(STOP_AFTER_ATTEMPT), 
@@ -86,23 +86,23 @@ def convert_openai_to_ai21_prompt_format_1(prompt, agent_type="buyer"):
     prompt_ai21 += "\n\nMary:"
     return prompt_ai21
 
-def convert_openai_to_ai21_prompt_format_2(prompt, agent_type="buyer"):
-    """Convert OpenAI API format to AI21 format, try other round splitters 
-    because using ## seems to be not the default in the official documentation"""
-    # prompt_ai21 = prompt[0]["content"] + "\n\n" + prompt[1]["content"]
-
-    # if(agent_type == "seller"): counterpart = "Buyer"
-    # elif(agent_type == "buyer"): counterpart = "Seller"
-    # else: pass 
-    
-    # for p in prompt[2:]:
-    #     if(p["role"] == "user"):
-    #         prompt_ai21 += '\n\n%s: %s' % (counterpart, p["content"])
-    #     elif(p["role"] == "assistant"):
-    #         prompt_ai21 += '\n\nMary: %s' % p["content"]
-
-    # prompt_ai21 += "\n\nMary:"
-    return prompt_ai21
+# def convert_openai_to_ai21_prompt_format_2(prompt, agent_type="buyer"):
+#     """Convert OpenAI API format to AI21 format, try other round splitters
+#     because using ## seems to be not the default in the official documentation"""
+#     # prompt_ai21 = prompt[0]["content"] + "\n\n" + prompt[1]["content"]
+#
+#     # if(agent_type == "seller"): counterpart = "Buyer"
+#     # elif(agent_type == "buyer"): counterpart = "Seller"
+#     # else: pass
+#
+#     # for p in prompt[2:]:
+#     #     if(p["role"] == "user"):
+#     #         prompt_ai21 += '\n\n%s: %s' % (counterpart, p["content"])
+#     #     elif(p["role"] == "assistant"):
+#     #         prompt_ai21 += '\n\nMary: %s' % p["content"]
+#
+#     # prompt_ai21 += "\n\nMary:"
+#     return prompt_ai21
 
 def convert_openai_to_cohere_prompt(prompt):
     """Convert OpenAI API format to Cohere format

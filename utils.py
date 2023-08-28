@@ -1,5 +1,6 @@
 import sys
 import time
+import os
 
 def wprint(s, fd=None, verbose=True):
     if(fd is not None): fd.write(s + '\n')
@@ -9,6 +10,9 @@ def wprint(s, fd=None, verbose=True):
 class Logger(object):
     def __init__(self, log_file, verbose=True):
         self.terminal = sys.stdout
+        directory_path = os.path.dirname(log_file)
+        if not os.path.exists(directory_path):
+            os.makedirs(directory_path)
         self.log = open(log_file, "w")
         self.verbose = verbose
 

@@ -1,8 +1,8 @@
 import openai
-import anthropic
-import ai21
+# import anthropic
+# import ai21
 import re 
-import cohere
+# import cohere
 
 from copy import deepcopy
 from pprint import pprint
@@ -91,16 +91,16 @@ class DialogAgent(object):
         self.api_key = api_key
         self.item = item
 
-        if("claude" in self.engine):
-            self.claude = anthropic.Client(self.api_key)
-        if("cohere" in self.engine):
-            assert self.engine in ["cohere-command-nightly", 
-                                   "cohere-command", 
-                                   "cohere-command-light", 
-                                   "cohere-command-light-nightly"
-                                   ]
-            self.cohere_model = self.engine[7:]
-            self.co = cohere.Client(api_key)
+        # if("claude" in self.engine):
+        #     self.claude = anthropic.Client(self.api_key)
+        # if("cohere" in self.engine):
+        #     assert self.engine in ["cohere-command-nightly",
+        #                            "cohere-command",
+        #                            "cohere-command-light",
+        #                            "cohere-command-light-nightly"
+        #                            ]
+        #     self.cohere_model = self.engine[7:]
+        #     self.co = cohere.Client(api_key)
 
         if(initial_dialog_history is None):
             self.dialog_history = [{"role": "system", "content": system_instruction}]
@@ -129,47 +129,47 @@ class DialogAgent(object):
                         )
             message = response['choices'][0]['message']
             assert(message['role'] == 'assistant')
-        elif("claude" in self.engine):
-            prompt_claude = convert_openai_to_anthropic_prompt(messages)
-            # import ipdb; ipdb.set_trace()
-            response = claude_completion_with_backoff(self.claude, 
-                                                      prompt=prompt_claude,
-                                                      stop_sequences=[anthropic.HUMAN_PROMPT],
-                                                      model=self.engine,
-                                                      max_tokens_to_sample=512,
-                                                      )
-            message = {"role": "assistant", "content": response["completion"].strip()}
-        elif("j2" in self.engine):
-            prompt_ai21 = convert_openai_to_ai21_prompt_format_1(messages, self.agent_type)
-            # import ipdb; ipdb.set_trace()
-            response = ai21_completion_with_backoff(model=self.engine,
-                                                    prompt=prompt_ai21,
-                                                    numResults=1,
-                                                    maxTokens=512,
-                                                    temperature=0.7,
-                                                    topKReturn=0,
-                                                    topP=1,
-                                                    stopSequences=["##"]
-                                                    )
-            content = response["completions"][0]["data"]["text"]
-            if(self.agent_type in ["seller", "buyer"]):
-                content = content.split('\n')[0]
-            message = {"role": "assistant", 
-                       "content": content
-                       }
-        elif("cohere" in self.engine):
-            prompt_cohere = convert_openai_to_cohere_prompt(messages)
-            # import ipdb; ipdb.set_trace()
-            response = cohere_completion_with_backoff(self.co,
-                                                      prompt=prompt_cohere,
-                                                      model=self.cohere_model,
-                                                      max_tokens=512,
-                                                      )
-            
-            # import ipdb; ipdb.set_trace()
-            message = {"role": "assistant", 
-                       "content": response[0].text
-                       }
+        # elif("claude" in self.engine):
+        #     prompt_claude = convert_openai_to_anthropic_prompt(messages)
+        #     # import ipdb; ipdb.set_trace()
+        #     response = claude_completion_with_backoff(self.claude,
+        #                                               prompt=prompt_claude,
+        #                                               stop_sequences=[anthropic.HUMAN_PROMPT],
+        #                                               model=self.engine,
+        #                                               max_tokens_to_sample=512,
+        #                                               )
+        #     message = {"role": "assistant", "content": response["completion"].strip()}
+        # elif("j2" in self.engine):
+        #     prompt_ai21 = convert_openai_to_ai21_prompt_format_1(messages, self.agent_type)
+        #     # import ipdb; ipdb.set_trace()
+        #     response = ai21_completion_with_backoff(model=self.engine,
+        #                                             prompt=prompt_ai21,
+        #                                             numResults=1,
+        #                                             maxTokens=512,
+        #                                             temperature=0.7,
+        #                                             topKReturn=0,
+        #                                             topP=1,
+        #                                             stopSequences=["##"]
+        #                                             )
+        #     content = response["completions"][0]["data"]["text"]
+        #     if(self.agent_type in ["seller", "buyer"]):
+        #         content = content.split('\n')[0]
+        #     message = {"role": "assistant",
+        #                "content": content
+        #                }
+        # elif("cohere" in self.engine):
+        #     prompt_cohere = convert_openai_to_cohere_prompt(messages)
+        #     # import ipdb; ipdb.set_trace()
+        #     response = cohere_completion_with_backoff(self.co,
+        #                                               prompt=prompt_cohere,
+        #                                               model=self.cohere_model,
+        #                                               max_tokens=512,
+        #                                               )
+        #
+        #     # import ipdb; ipdb.set_trace()
+        #     message = {"role": "assistant",
+        #                "content": response[0].text
+        #                }
         else:
             raise ValueError("Unknown engine %s" % self.engine)
         return message
@@ -256,7 +256,7 @@ class BuyerAgent(DialogAgent):
 
         # if the previous round is ended by the buyer, then add seller's acknowledgement
         if(self.dialog_history[-1]["role"] == "user"):
-            self.dialog_history.append({"role": "assitent", "content": "Sure, happy to do business with you."})
+            self.dialog_history.append({"role": "assistant", "content": "Sure, happy to do business with you."})
         
         # add the feedback from the critic
         feedback_prefix = "Well done in your last round. "
