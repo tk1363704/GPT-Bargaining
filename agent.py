@@ -1,3 +1,5 @@
+import copy
+
 import openai
 # import anthropic
 # import ai21
@@ -7,6 +9,7 @@ import re
 from copy import deepcopy
 from pprint import pprint
 from tenacity import retry, stop_after_attempt, wait_chain, wait_fixed
+import json
 
 from lib_api import *
 # from local.azure import azure_completion_with_backoff
@@ -30,6 +33,29 @@ def load_initial_instructions(path_to_instructions):
             instruction = {"role": content[i].strip().lower().replace("====", "").replace(" ", "").strip(), 
                            "content": content[i+1].strip()
                            }
+            initial_instruction.append(instruction)
+    return initial_instruction
+
+def load_initial_instructions_withprefix(path_to_instructions, prefix):
+    """Load initial instructions from textual format to a python dict"""
+    pattern = r"==== (SYSTEM|USER|ASSISTANT) ===="
+
+    # Use re.split to split the string by the pattern
+    with open(path_to_instructions) as f:
+        content = f.read()
+        content = re.split(pattern, content)
+        content_ = []
+        for c in content:
+            if(c != ""): content_.append(c)
+        content = content_
+        l = len(content)
+        assert(l % 2 == 0)
+        initial_instruction = []
+        for i in range(0, l, 2):
+            instruction = {"role": content[i].strip().lower().replace("====", "").replace(" ", "").strip(),
+                           "content": content[i+1].strip()
+                           }
+            instruction['content'] = instruction['content'].replace("$SOCIAL_RULE_PREFIX", "\n" + prefix)
             initial_instruction.append(instruction)
     return initial_instruction
 
@@ -103,6 +129,7 @@ class DialogAgent(object):
         #     self.co = cohere.Client(api_key)
 
         if(initial_dialog_history is None):
+            self.initial_dialog_history = [{"role": "system", "content": system_instruction}]
             self.dialog_history = [{"role": "system", "content": system_instruction}]
         else:
             self.initial_dialog_history = deepcopy(initial_dialog_history)
@@ -111,21 +138,48 @@ class DialogAgent(object):
         self.last_prompt = ""
         return 
     
+    def reset_initial_dialogue_history(self, initial_dialogue_history):
+        self.initial_dialog_history = deepcopy(initial_dialogue_history)
+        self.dialog_history = deepcopy(initial_dialogue_history)
+        pass
+
     def reset(self):
         """Reset dialog history"""
         self.dialog_history = deepcopy(self.initial_dialog_history)
-        return 
+        return
+
+    def remediate_conversation(self, remediation):
+        self.dialog_history[-1]['content'] = remediation
+        return
+
+    def calc_message_length(self, messages):
+        length = 0
+        for dict_ in messages:
+            length += 12 + len(dict_['content'])
+        return length
 
     def call_engine(self, messages):
         """Route the call to different engines"""
         # if("azure" in self.engine):
         #     response = azure_completion_with_backoff(messages=messages)
         #     message = response['choices'][0]['message']
+        print('prompt is {}'.format(messages))
+
         if("gpt" in self.engine):
+
+            temp_messages = copy.deepcopy(messages)
+            while self.calc_message_length(temp_messages) >= 4050:
+                if len(temp_messages) >= 2:
+                    temp_messages = temp_messages[1:]
+                    pass
+                else:
+                    temp_messages[0]['content'] = temp_messages[0]['content'][-4000:]
+                    pass
+
             # import ipdb; ipdb.set_trace()
             response = completion_with_backoff(
                           model=self.engine,
-                          messages=messages
+                          messages=temp_messages
                         )
             message = response['choices'][0]['message']
             assert(message['role'] == 'assistant')
@@ -216,6 +270,7 @@ class BuyerAgent(DialogAgent):
                  buyer_instruction="buyer",
                  buyer_init_price=10,
                  seller_init_price=20,
+                 cost_price=10,
                  item="balloon", 
                 ):
         """Initialize the buyer agent"""
@@ -228,6 +283,7 @@ class BuyerAgent(DialogAgent):
         self.buyer_instruction = buyer_instruction
         self.buyer_init_price = buyer_init_price
         self.seller_init_price = seller_init_price
+        self.cost_price = cost_price
 
         print("Initializing buyer with engine %s" % self.engine)
 
@@ -236,6 +292,8 @@ class BuyerAgent(DialogAgent):
                 "BUYER_INIT_PRICE", str(buyer_init_price))
             self.dialog_history[i]["content"] = d["content"].replace(
                 "SELLER_INIT_PRICE", str(seller_init_price))
+            self.dialog_history[i]["content"] = d["content"].replace(
+                "COST_PRICE", str(cost_price))
         return
     
     def reset(self):
@@ -247,6 +305,8 @@ class BuyerAgent(DialogAgent):
                 "BUYER_INIT_PRICE", str(self.buyer_init_price))
             self.dialog_history[i]["content"] = d["content"].replace(
                 "SELLER_INIT_PRICE", str(self.seller_init_price))
+            self.dialog_history[i]["content"] = d["content"].replace(
+                "COST_PRICE", str(self.cost_price))
         return
     
     def receive_feedback(self, feedback, previous_price):
@@ -486,3 +546,39 @@ class BuyerCriticAgent(DialogAgent):
         response = self.call_engine(messages)
         feedback = response['content'].replace('\n\n', '\n')
         return feedback
+
+
+class RemediatorAgent(DialogAgent):
+
+    def __init__(self,
+                 initial_dialog_history=None,
+                 agent_type="remediator",
+                 engine="gpt-3.5-turbo",
+                 api_key="",
+                 ):
+        """Initialize the buyer critic agent"""
+        super().__init__(initial_dialog_history=initial_dialog_history,
+                         agent_type=agent_type,
+                         engine=engine,
+                         api_key=api_key
+                         )
+
+        print("Initializing remediator with engine %s" % self.engine)
+        return
+
+    def produce_remediation(self, buyer_history):
+        temporal_history = deepcopy(buyer_history)
+        if '您将扮演谈判游戏中的卖家角色' in temporal_history[0]['content']:
+            temporal_history = temporal_history[5:]
+        elif '您将扮演谈判游戏中的买家角色' in temporal_history[0]['content']:
+            temporal_history = temporal_history[2:]
+        else:
+            temporal_history = temporal_history[2:]
+        for x in temporal_history:
+            x['content'] = x['content'].replace("【violation】", "").replace("violation", "")
+        last_sentence = temporal_history[-1]['content']
+        messages = deepcopy(self.initial_dialog_history)
+        messages[0]['content'] = messages[0]['content'].replace("$CONVERSATION", '\n'.join(["{}: {}".format(x['role'], x['content']) for x in temporal_history])).replace("$LAST_SENTENCE", last_sentence)
+        response = self.call_engine(messages)
+        remediation = response['content'].replace('\n\n', '\n')
+        return remediation
