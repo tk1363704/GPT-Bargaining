@@ -36,13 +36,31 @@ def define_arguments():
     parser = argparse.ArgumentParser()
 
     # price related to the house
-    parser.add_argument('--commodity', type=str, default="house", help="[balloon, salary, house]")
-    parser.add_argument('--cost_price', type=int, default=600000,
-                        help='cost of the house')
-    parser.add_argument('--seller_init_price', type=int, default=700000,
+    parser.add_argument('--commodity', type=str, default="industrial", help="[balloon, salary, house, industrial, business]")
+
+    # # business
+    # parser.add_argument('--cost_price', type=int, default=0,
+    #                     help='cost of the store')
+    # parser.add_argument('--seller_init_price', type=int, default=0,
+    #                     help='initial offered price')
+    # parser.add_argument('--buyer_init_price', type=int, default=0,
+    #                     help='initial required price')
+
+    # industrial
+    parser.add_argument('--cost_price', type=int, default=10,
+                        help='cost of the unit price of an industrial commodity')
+    parser.add_argument('--seller_init_price', type=int, default=50,
                         help='initial offered price')
-    parser.add_argument('--buyer_init_price', type=int, default=500000,
+    parser.add_argument('--buyer_init_price', type=int, default=30,
                         help='initial required price')
+
+    # # house
+    # parser.add_argument('--cost_price', type=int, default=600000,
+    #                     help='cost of the house')
+    # parser.add_argument('--seller_init_price', type=int, default=700000,
+    #                     help='initial offered price')
+    # parser.add_argument('--buyer_init_price', type=int, default=500000,
+    #                     help='initial required price')
 
     # # price related to the salary
     # parser.add_argument('--commodity', type=str, default="salary", help="[balloon, salary, house]")
@@ -64,14 +82,17 @@ def define_arguments():
 
     # seller arguments
     parser.add_argument('--seller_engine', type=str, default="gpt-3.5-turbo")
-    # parser.add_argument('--seller_instruction', type=str, default="seller")
+    # parser.add_argument('--seller_instruction', type=str, default="seller_cn")
     # parser.add_argument('--seller_instruction', type=str, default="seller_extraversion")
     # parser.add_argument('--seller_instruction', type=str, default="seller_agreeableness")
     # parser.add_argument('--seller_instruction', type=str, default="seller_extraversion_agreeableness")
     # parser.add_argument('--seller_instruction', type=str, default="seller_social_norm_cn")
-    parser.add_argument('--seller_instruction', type=str, default="seller_social_norm_explicit_labeling_cn")
+    # parser.add_argument('--seller_instruction', type=str, default="seller_social_norm_explicit_labeling_cn")
+    parser.add_argument('--seller_instruction', type=str, default="seller_social_norm_explicit_labeling_cn_withgoals")
 
-    parser.add_argument('--seller_prefix_instruction', type=str, default="seller_social_prefix_cn_simplified", help="[seller_social_prefix_cn_simplified, seller_social_prefix_cn]")
+    parser.add_argument('--reset_seller_initial_history_every_exp', type=bool, default=True,
+                        help='generate social norm instruct rules every experiment, used for prefix generation')
+    parser.add_argument('--seller_prefix_instruction', type=str, default="seller_social_prefix_cn_simplified_withgoals", help="[seller_social_prefix_cn_simplified, seller_social_prefix_cn, seller_social_prefix_cn_simplified_withgoals]")
 
     parser.add_argument('--seller_critic_engine', type=str, default="gpt-3.5-turbo")
     parser.add_argument('--seller_critic_instruction', type=str, default="seller_critic")
@@ -80,8 +101,8 @@ def define_arguments():
     parser.add_argument('--buyer_engine', type=str, default="gpt-3.5-turbo")
     # parser.add_argument('--buyer_instruction', type=str, default="buyer_with_face",
     #                     help="[buyer, buyer_no_initial_price, buyer_with_face]")
-    parser.add_argument('--buyer_instruction', type=str, default="buyer_cn",
-                        help="[buyer, buyer_no_initial_price, buyer_with_face]")
+    parser.add_argument('--buyer_instruction', type=str, default="buyer_cn_withgoals",
+                        help="[buyer, buyer_no_initial_price, buyer_with_face, buyer_cn, buyer_cn_withgoals]")
 
     parser.add_argument('--buyer_critic_engine', type=str, default="gpt-3.5-turbo")
     parser.add_argument('--buyer_critic_instruction', type=str, default="buyer_critic",
@@ -106,10 +127,10 @@ def define_arguments():
     # game arguments
     parser.add_argument('--game_type', type=str, default='run_simple',
                         help='[criticize_seller, criticize_buyer, seller_compare_feedback, run_simple]')
-    parser.add_argument('--n_exp', type=int, default=10,
+    parser.add_argument('--n_exp', type=int, default=50,
                         help='number of experiments')
-    parser.add_argument('--n_round', type=int, default=10, 
-                        help='number of rounds')
+    parser.add_argument('--n_round', type=int, default=20,
+                        help='number of rounds, 20 for business bargain')
     parser.add_argument('--n_rollout', type=int, default=5,
                         help='number of rollout')
 
@@ -120,14 +141,12 @@ def define_arguments():
                         help='version to record the game')
     parser.add_argument('--game_version', type=str, default="test", 
                         help='version plus arguments')
-    parser.add_argument('--reset_seller_initial_history_every_exp', type=bool, default=True,
-                        help='generate social norm instruct rules every experiment')
 
     parser.add_argument('--remediator', type=bool, default=True,
                         help='call the remediator to remedy the norm violation')
     parser.add_argument('--remediator_instruction', type=str, default="remediator_cn",
                         help="[remediator_cn]")
-    parser.add_argument('--remediator_engine', type=str, default="gpt-3.5-turbo")
+    parser.add_argument('--remediator_engine', type=str, default="atom-7b-chat", help='[gpt-3.5-turbo, atom-7b-chat]')
 
     # parse and set arguments
     args = parser.parse_args()
@@ -157,7 +176,9 @@ def get_engine_and_api_key(agent_type, engine_name, args):
         api_key = args.ai21_api_key
     elif("cohere" in engine_name):
         api_key = args.cohere_api_key
-    else: 
+    elif("atom" in engine_name):
+        api_key = ""
+    else:
         raise ValueError("engine name %s not found" % engine_name)
 
     engine_class = engine_map[agent_type]
@@ -192,12 +213,19 @@ def run(buyer, seller, moderator,
     """
     logger.write('---- start bargaining ----')
 
-    if(who_is_first == "buyer"):
+    # todo only first sentence has violation, using COT?
+
+    if(who_is_first == "buyer"): # buyer starts the first LLM generation
         logger.write('  buyer: %s' % buyer.last_response)
         dict_['buyer'].add(buyer.last_response)
         seller_run = seller.last_response
         buyer_run = buyer.call(seller_run)
-        if remediator is not None and ('【violation】' in buyer.dialog_history[-1]['content'] or 'violation' in buyer.dialog_history[-1]['content']):
+        if remediator is not None and ('【violation】' in buyer.dialog_history[-1]['content'] or
+                                       '【违规】' in buyer.dialog_history[-1]['content'] or
+                                       '【违反社会规范】' in buyer.dialog_history[-1]['content'] or
+                                       '【违反规范】' in buyer.dialog_history[-1]['content'] or
+                                       'violation' in buyer.dialog_history[-1]['content'] or
+                                       '违规' in buyer.dialog_history[-1]['content']):
             logger.write('【Before remediation】: %s' % buyer.dialog_history[-1]['content'])
             sentence = remediator.produce_remediation(buyer.dialog_history)
             buyer.remediate_conversation(sentence)
@@ -215,7 +243,12 @@ def run(buyer, seller, moderator,
     no_deal_cnt = 0
     for _ in range(n_round):
         seller_run = seller.call(buyer_run)
-        if remediator is not None and ('【violation】' in seller.dialog_history[-1]['content'] or 'violation' in seller.dialog_history[-1]['content']):
+        if remediator is not None and ('【violation】' in seller.dialog_history[-1]['content'] or
+                                       '【违规】' in seller.dialog_history[-1]['content'] or
+                                       '【违反社会规范】' in seller.dialog_history[-1]['content'] or
+                                       '【违反规范】' in seller.dialog_history[-1]['content'] or
+                                       'violation' in seller.dialog_history[-1]['content'] or
+                                       '违规' in seller.dialog_history[-1]['content']):
             logger.write('【Before remediation】: %s' % seller.dialog_history[-1]['content'])
             sentence = remediator.produce_remediation(seller.dialog_history)
             seller.remediate_conversation(sentence)
@@ -239,7 +272,12 @@ def run(buyer, seller, moderator,
                 if(no_deal_cnt == no_deal_thres): break
             
         buyer_run = buyer.call(seller_run)
-        if remediator is not None and ('【violation】' in buyer.dialog_history[-1]['content'] or 'violation' in buyer.dialog_history[-1]['content']):
+        if remediator is not None and ('【violation】' in buyer.dialog_history[-1]['content'] or
+                                       '【违规】' in buyer.dialog_history[-1]['content'] or
+                                       '【违反社会规范】' in buyer.dialog_history[-1]['content'] or
+                                       '【违反规范】' in buyer.dialog_history[-1]['content'] or
+                                       'violation' in buyer.dialog_history[-1]['content'] or
+                                       '违规' in buyer.dialog_history[-1]['content']):
             logger.write('【Before remediation】: %s' % buyer.dialog_history[-1]['content'])
             sentence = remediator.produce_remediation(buyer.dialog_history)
             buyer.remediate_conversation(sentence)
@@ -406,6 +444,11 @@ def run_simple(args, buyer, seller, moderator,
                                            api_key=remediator_api_key
                                            )
 
+    if args.reset_seller_initial_history_every_exp is not True:
+        seller_initial_dialog_history = load_initial_instructions(
+            'lib_prompt/{}/{}.txt'.format(args.commodity, args.seller_instruction))
+        seller.reset_initial_dialogue_history(seller_initial_dialog_history)
+
     for i in range(n_exp):
         logger.write("==== ver %s CASE %d / %d, %.2f min ====" % (args.ver, i, n_exp, compute_time(start_time)))
 
@@ -419,7 +462,7 @@ def run_simple(args, buyer, seller, moderator,
             seller_initial_dialog_history = load_initial_instructions_withprefix(
                 'lib_prompt/{}/{}.txt'.format(args.commodity, args.seller_instruction), social_norm_rules)
             seller.reset_initial_dialogue_history(seller_initial_dialog_history)
-
+        # set price
         buyer.reset()
         seller.reset()
         moderator.reset()
@@ -437,7 +480,8 @@ def run_simple(args, buyer, seller, moderator,
         else:
             logger.write("The deal is BROKEN!")
         logger.write("\n\n\n\n")
-    logger.write("\nSuccessful deal rate: {}%, average price: {}".format(float(effective_price_num/n_exp*100.0), float(sum_price/effective_price_num)))
+    average_price = 0.0 if effective_price_num == 0 else float(sum_price/effective_price_num)
+    logger.write("\nSuccessful deal rate: {}%, average price: {}".format(float(effective_price_num/n_exp*100.0), average_price))
     logger.write("\nDeal prices are: {}".format(' '.join([str(x) for x in deal_prices]).strip()))
     return
 
@@ -538,6 +582,7 @@ def main(args):
 
     logger.write('commodity: {}'.format(args.commodity))
     logger.write('seller_instruction: {}'.format(args.seller_instruction))
+    logger.write('reset_seller_initial_history_every_exp: {}'.format(args.reset_seller_initial_history_every_exp))
     logger.write('seller_prefix_instruction: {}'.format(args.seller_prefix_instruction))
     logger.write('buyer_instruction: {}'.format(args.buyer_instruction))
     logger.write('moderator_instruction: {}'.format(args.moderator_instruction))
@@ -547,6 +592,7 @@ def main(args):
     logger.write('ver: {}'.format(args.ver))
     logger.write('remediator: {}'.format(args.remediator))
     logger.write('remediator_instruction: {}'.format(args.remediator_instruction))
+    logger.write('remediator_engine: {}'.format(args.remediator_engine))
 
 
     seller_engine_class, seller_api_key = get_engine_and_api_key(engine_name=args.seller_engine,
@@ -670,7 +716,7 @@ if __name__ == "__main__":
     # game_version = '{}_{}_{}_{}_{}_runs_{}_rollout_ver_{}_{}'.format(args.commodity, args.seller_instruction, args.buyer_instruction, args.game_type, args.n_exp, args.n_rollout, args.ver, args.moderator_instruction)
     # print('game_version is {}'.format(game_version))
 
-    log_prefix = '{}_{}_{}_{}'.format(args.commodity, args.seller_instruction, args.buyer_instruction, time.strftime("%Y%m%d-%H%M%S"))
+    log_prefix = '{}_{}_{}_{}_{}'.format(args.commodity, args.seller_instruction, args.buyer_instruction, args.remediator_engine, time.strftime("%Y%m%d-%H%M%S"))
     logger = Logger(args.output_path + log_prefix + ".txt", args.verbose)
     print('logger path is {}'.format(args.output_path + log_prefix + ".txt"))
 

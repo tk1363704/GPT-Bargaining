@@ -22,8 +22,6 @@ buyer: 太棒了！我很高兴我们能够就价格达成一致。现在我们�
 question: have the seller and the buyer achieved a deal? Yes or No
 answer: Because both parties have confirmed the price to be $680000. The answer is Yes.
 
-seller: 谢谢您对这个房子的关注和提议。$600000的价格是一个合理的出价，我会考虑一下，并在我们继续讨论之前给您一个确定的答复。
-buyer: 非常感谢您的考虑和回复。我期待着听到您的决定。如果您需要任何补充信息或有其他要求，请随时告诉我。
 seller: 非常感谢您的理解和合作。我会认真考虑您的提议，并在尽快的时间内给予您一个明确的回复。如果有任何需要进一步讨论的问题或要求，我会及时与您联系。再次感谢您的兴趣和耐心等待。
 buyer: 非常感谢！期待收到您的回复。如有任何问题或需要进一步的帮助，请随时告知。祝您一切顺利！
 seller: 非常感谢您的好意！我会尽快回复您并提供相关信息。如果您有任何问题或需要进一步的帮助，请随时与我联系。祝您一切顺利！
@@ -56,8 +54,6 @@ seller: 非常感谢您的合作和理解。我很高兴我们最终达成了一
 question: have the seller and the buyer achieved a deal? Yes or No
 answer: Because both parties have confirmed the price to be $610000. The answer is Yes.
 
-seller: 谢谢您的理解。我的期望价格范围在$680000到$700000之间。
-buyer: 非常感谢您提供的信息。我会重新考虑我的报价。我能支付$680000购买这个房子。这是我最后的报价。
 seller: 非常感谢您的重新考虑和报价。我会考虑一下您提出的$680000，并与我的团队商讨。我希望能尽快给您一个答复。
 buyer: 非常感谢您的考虑和耐心等待。我期待您的回复，并希望我们能达成一个互惠互利的协议。请随时告诉我您的决定。
 seller: 非常感谢您的理解和耐心等待。我会尽快与我的团队商讨，并尽快给您一个答复。我们希望能够达成一个双方都满意的交易。谢谢！
@@ -71,8 +67,6 @@ buyer: 我理解您的观点，但是我还是倾向于以$600000的价格购买
 question: have the seller and the buyer achieved a deal? Yes or No
 answer: Because the seller did not provide a clear response to the buyer's inquiry about whether they would accept the proposed transaction price. The answer is No
 
-seller: 当然，物业维护费用和装修费用都是需要考虑的重要因素。我将降低物业维护费用，并提供一些额外的装修补贴以满足您的需求。于此同时，您是否愿意再考虑一下价格并给出一个更接近我起始价格的报价？这将有助于我们更快地达成协议。
-buyer: 谢谢您的建议。我愿意重新考虑价格，但是需要您提供更多具体的细节和优惠，以便我能够更准确地评估。如果您能提供更多使得这个交易更有吸引力的方面，我将考虑增加我的报价。
 seller: 非常感谢您的考虑。除了降低物业维护费用和额外的装修补贴之外，我还愿意为您提供一个免费的家具套装，并安排一次免费的专业清洁服务。此外，我可以帮助您与当地金融机构联系，以获得更有利的贷款条件。这些附加优惠将使房产更有吸引力，并为您提供更好的居住体验。在这些额外优势的基础上，您是否愿意重新考虑您的报价？
 buyer: 非常感谢您提供的额外优惠，这些确实增加了这个交易的吸引力。我会考虑将报价调整到$580000，以反映您所提供的附加优势。这样的价格反映了我们在谈判过程中达成的共同和谐，并使得这次交易对双方都有价值。
 question: have the seller and the buyer achieved a deal? Yes or No
@@ -83,14 +77,11 @@ seller: 很高兴听到您愿意重新考虑购买条件。我可以考虑一些
 question: have the seller and the buyer achieved a deal? Yes or No
 answer: Because the buyer did not provide a clear response to the seller's inquiry about whether they would accept the proposed transaction price. The answer is No
 
-seller: 很抱歉，但$600000确实低于我希望获得的价位。我希望能以更高的价格出售这套房子。
-buyer: 我明白你的想法。请告诉我，你期望的最低售价是多少？
 seller: 我希望能以$650000的价格出售这套房子。这是我认为公正且合理的价格。
 buyer: 我理解你的观点，但$650000对我来说仍然高于预期。最高能达到$610000吗？
 seller: 我理解你的限制，但$610000还是低于我的底线价位。我希望能以$640000的价格出售这套房子。能否稍微靠近这个价格呢？
 answer: Because the buyer did not provide a clear response to the seller's inquiry about whether they would accept the proposed transaction price. The answer is No
 
-buyer: 我明白您的立场，但我希望我们能够找到一个互利的解决方案。如果您愿意重新考虑，我可以增加到$675000作为我的最终报价。这是我所能承受的最高价格。
 seller: 非常感谢您的努力和诚意。我理解您的立场，但我不能接受$675000的报价。$700000是我对这个房子的最低底线。如果您还有其他建议或方案，请随时告诉我。
 buyer: 我理解您的要求，并感谢您的耐心。考虑到您的坚持和市场价值，我会接受您的价格，$700000。请准备好相关文件和手续，我们可以继续进行交易。非常感谢您的合作！
 seller: 非常感谢您的理解和配合。我很高兴我们能够达成一致。我会准备好相关文件和手续，以确保交易顺利进行。再次感谢您的合作，祝贺您即将拥有这个美好的房子！

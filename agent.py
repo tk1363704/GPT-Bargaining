@@ -11,6 +11,10 @@ from pprint import pprint
 from tenacity import retry, stop_after_attempt, wait_chain, wait_fixed
 import json
 
+import torch
+from transformers import AutoTokenizer, AutoModelForCausalLM
+from peft import PeftModel,PeftConfig
+
 from lib_api import *
 # from local.azure import azure_completion_with_backoff
 
@@ -116,6 +120,7 @@ class DialogAgent(object):
         self.engine = engine
         self.api_key = api_key
         self.item = item
+        self.dialog_history = []
 
         # if("claude" in self.engine):
         #     self.claude = anthropic.Client(self.api_key)
@@ -148,6 +153,11 @@ class DialogAgent(object):
         self.dialog_history = deepcopy(self.initial_dialog_history)
         return
 
+    def reset_history(self, history):
+        """Reset dialog history"""
+        self.dialog_history = deepcopy(history)
+        return
+
     def remediate_conversation(self, remediation):
         self.dialog_history[-1]['content'] = remediation
         return
@@ -163,7 +173,7 @@ class DialogAgent(object):
         # if("azure" in self.engine):
         #     response = azure_completion_with_backoff(messages=messages)
         #     message = response['choices'][0]['message']
-        print('prompt is {}'.format(messages))
+        # print('prompt is {}'.format(messages))
 
         if("gpt" in self.engine):
 
@@ -257,7 +267,7 @@ class DialogAgent(object):
     def history(self):
         for h in self.dialog_history:
             print('%s:  %s' % (h["role"], h["content"]))
-        return 
+        return self.dialog_history
     
 
 class BuyerAgent(DialogAgent):
@@ -562,8 +572,31 @@ class RemediatorAgent(DialogAgent):
                          engine=engine,
                          api_key=api_key
                          )
+        self.model = None
+        self.tokenizer = None
 
-        print("Initializing remediator with engine %s" % self.engine)
+        if 'atom' in engine:
+            base_model_name_or_path = 'FlagAlpha/Atom-7B-Chat'
+            finetune_model_path = 'train/sft/save_folder'
+            config = PeftConfig.from_pretrained(finetune_model_path)
+            print('--------peft_config is:--------\n')
+            print(config)
+            print('-------------------------------\n')
+            tokenizer = AutoTokenizer.from_pretrained(base_model_name_or_path, use_fast=False)
+            tokenizer.pad_token = tokenizer.eos_token
+            model = AutoModelForCausalLM.from_pretrained(base_model_name_or_path, device_map='auto',
+                                                         torch_dtype=torch.float16, load_in_8bit=True)
+            model = PeftModel.from_pretrained(model, finetune_model_path, device_map={"": 0})
+            model = model.eval()
+            self.model = model
+            self.tokenizer = tokenizer
+            print("Initializing remediator with engine %s" % base_model_name_or_path)
+
+            # self.model = 'test'
+            # pass
+
+        else:
+            print("Initializing remediator with engine %s" % self.engine)
         return
 
     def produce_remediation(self, buyer_history):
@@ -578,7 +611,38 @@ class RemediatorAgent(DialogAgent):
             x['content'] = x['content'].replace("【violation】", "").replace("violation", "")
         last_sentence = temporal_history[-1]['content']
         messages = deepcopy(self.initial_dialog_history)
-        messages[0]['content'] = messages[0]['content'].replace("$CONVERSATION", '\n'.join(["{}: {}".format(x['role'], x['content']) for x in temporal_history])).replace("$LAST_SENTENCE", last_sentence)
-        response = self.call_engine(messages)
-        remediation = response['content'].replace('\n\n', '\n')
+        if self.model is None:
+            messages[0]['content'] = messages[0]['content'].replace("$CONVERSATION", '\n'.join(["{}: {}".format(x['role'], x['content']) for x in temporal_history])).replace("$LAST_SENTENCE", last_sentence)
+            response = self.call_engine(messages)
+            remediation = response['content'].replace('\n\n', '\n')
+        else:
+            def get_conversation(temporal_history):
+                # history = dict_['seller_dialog_history'][5:]
+                conversation = ''
+                for i, sentence in enumerate(temporal_history):
+                    if i % 2 == 0:
+                        conversation += '人物A: ' + sentence['content'].replace('【violation】', '') + '\n'
+                    else:
+                        conversation += '人物B: ' + sentence['content'].replace('【violation】', '') + '\n'
+                conversation = conversation.strip()
+                return conversation
+            conversation = get_conversation(temporal_history)
+            input = "<s>Human: 你是一个对话助手，你的任务是改写对话中最后一句话，使其符合社会规范。\n在谈判游戏中，谈判的对话如下：\n$CONVERSATION\n在这个对话中，最后一句话\"$SENTENCE\"违反了社会规范，请对这句话进行改写:\n</s><s>Assistant: ".replace(
+                '$CONVERSATION', conversation).replace("$SENTENCE", last_sentence)
+            input_ids = self.tokenizer([input], return_tensors="pt", add_special_tokens=False).input_ids.to('cuda')
+            generate_input = {
+                "input_ids": input_ids,
+                "max_new_tokens": 512,
+                "do_sample": True,
+                "top_k": 50,
+                "top_p": 0.95,
+                "temperature": 0.3,
+                "repetition_penalty": 1.3,
+                "eos_token_id": self.tokenizer.eos_token_id,
+                "bos_token_id": self.tokenizer.bos_token_id,
+                "pad_token_id": self.tokenizer.pad_token_id
+            }
+            generate_ids = self.model.generate(**generate_input)
+            generate_tokens = self.tokenizer.decode(generate_ids[0])
+            remediation = generate_tokens.split('<s>')[-1].replace('</s>', '').replace('Assistant:', '').replace('assistant:', '').strip()
         return remediation

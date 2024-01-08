@@ -1,0 +1,60 @@
+We need to convert the input sentence into a more general expression.
+The conversion consists of three steps.
+First, identifying: identify entities and verb words.
+Second, conversion: convert the entities with more generic words and transform the verb words into the base form.
+Third, further conversion: convert the sentence into a more general expression.
+Note: The generic expressions used in the conversion are placeholders for the specific details in the original sentence.
+
+--------------------------------------------
+The following is a conversion example.
+
+Original Sentence: John went to buy a new collar for his dog.
+
+    1. Identifying:
+        Person: John
+        Action: went, buy
+        Object: a new collar
+        Possession: his dog
+
+    2. Conversion:
+        a person go to buy another thing for something
+
+    3. Further Conversion:
+        a person buy something to do something
+--------------------------------------------
+The following is another example.
+
+Original Sentence: John drives near the woman.
+
+    1. Identifying:
+        Person: John
+        Action: drives
+        Object: the woman
+        Preposition: near
+
+    2. Conversion:
+        a person see another person
+
+    3. Further Conversion:
+        a person see another person
+--------------------------------------------
+The following is another example.
+
+Original Sentence: Alex saw the same driver in the bus.
+
+    1. Identifying:
+        Person: Alex
+        Action: saw
+        Object: the same driver
+        Location: in the bus
+
+    2. Conversion:
+        a person see another person in something
+
+    3. Further Conversion:
+        a person see another person
+--------------------------------------------
+
+Now we have a test instance. Please refer to the task instruction and the above examples to do the conversion.
+The input sentence is: $$$$$.
+Please convert the sentence into a more general expression following the above-mentioned three steps.
